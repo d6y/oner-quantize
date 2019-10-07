@@ -1,0 +1,8 @@
+[package]
+name = "oner-quantize"
+version = "1.0.0"
+authors = ["Richard Dallaway <richard@dallaway.com>"]
+edition = "2018"
+
+[dependencies]
+ord_subset = "3"
