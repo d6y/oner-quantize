@@ -19,9 +19,7 @@ fn quantize_column<'v>(column: &'v [(&str, &str)], small: usize) -> HashMap<&'v 
         if let Ok(n) = v.parse::<f32>() {
             sorted.push((n, c));
         } else {
-            unimplemented!(
-                "Cannot yet quantize non-numeric values"
-            );
+            unimplemented!("Cannot yet quantize non-numeric values");
         }
     }
     sorted.ord_subset_sort_by_key(|pair| pair.0);
