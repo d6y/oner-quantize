@@ -1,3 +1,7 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 mod interval;
 mod iter;
 
@@ -89,6 +93,7 @@ fn no_dominant_class(start: usize, until: usize, small: usize, data: &[(f32, &st
     let counts = frequency_count(&classes);
     counts.values().all(|&count| count <= small)
 }
+
 #[cfg(test)]
 mod tests {
     use super::quantize_column;

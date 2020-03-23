@@ -1,3 +1,7 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 use super::iter::frequency_count;
 use ord_subset::OrdSubsetIterExt;
 use std::fmt::Debug;
@@ -46,24 +50,18 @@ where
 
     fn merge(&self, later: &Self) -> Self {
         match (self, later) {
-            (Interval::Lower { .. }, Interval::Range { below, class, .. }) => Interval::Lower {
-                below: *below,
-                class: *class,
-            },
+            (Interval::Lower { .. }, Interval::Range { below, class, .. }) => {
+                Interval::Lower { below: *below, class: *class }
+            }
             (Interval::Lower { .. }, Interval::Upper { class, .. }) => {
                 Interval::Infinite { class: *class }
             }
             (Interval::Range { from, .. }, Interval::Range { below, class, .. }) => {
-                Interval::Range {
-                    from: *from,
-                    below: *below,
-                    class: *class,
-                }
+                Interval::Range { from: *from, below: *below, class: *class }
             }
-            (Interval::Range { from, .. }, Interval::Upper { class, .. }) => Interval::Upper {
-                from: *from,
-                class: *class,
-            },
+            (Interval::Range { from, .. }, Interval::Upper { class, .. }) => {
+                Interval::Upper { from: *from, class: *class }
+            }
             _ => panic!("Merging {:?} with {:?} is not supported", self, later),
         }
     }
@@ -107,9 +105,7 @@ where
             class: most_frequent_class(index_start, index_end),
         };
 
-        let infinite = || Interval::Infinite {
-            class: most_frequent_class(0, data.len()),
-        };
+        let infinite = || Interval::Infinite { class: most_frequent_class(0, data.len()) };
 
         match splits.len() {
             0 => vec![infinite()],

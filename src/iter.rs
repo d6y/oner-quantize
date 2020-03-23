@@ -1,3 +1,7 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::hash::Hash;
@@ -24,8 +28,7 @@ where
 }
 
 pub fn all_numeric_or_missing(xs: &[&String]) -> bool {
-    xs.iter()
-        .all(|x| x == &"" || x == &"?" || f32::from_str(x).is_ok())
+    xs.iter().all(|x| x == &"" || x == &"?" || f32::from_str(x).is_ok())
 }
 
 #[cfg(test)]

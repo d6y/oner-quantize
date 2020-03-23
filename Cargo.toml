@@ -3,6 +3,17 @@ name = "oner_quantize"
 version = "0.1.0"
 authors = ["Richard Dallaway <richard@dallaway.com>"]
 edition = "2018"
+description = "An implementation of the 1R numeric quantization algorithm"
+license = "MPL-2.0+"
+repository = "https://github.com/d6y/oner_quantize"
+readme = "README.md"
+keywords = ["machine-learning", "data-science", "rules"]
+categories = ["science"]
+exclude = [".github/"]
 
 [dependencies]
 ord_subset = "3"
+ndarray = "0.13"
+itertools = "0.9"
+
+
