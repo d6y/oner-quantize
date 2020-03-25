@@ -6,9 +6,9 @@ use std::fmt::Debug;
 use std::hash::Hash;
 
 /// An interval represents a mapping from a range of values of type `A`, to a class, `C`.
-/// 
+///
 /// # Examples
-/// 
+///
 /// ```
 /// use oner_quantize::Interval;
 /// let interval = Interval::lower(100, "true");
@@ -74,7 +74,6 @@ where
     A: Debug + PartialOrd + Copy,
     C: Debug + Eq + Hash + Copy,
 {
-
     fn merge(&self, later: &Self) -> Self {
         match (self, later) {
             (Interval::Lower { .. }, Interval::Range { below, class, .. }) => {

@@ -25,14 +25,10 @@ use std::hash::Hash;
     }
 */
 
-pub fn find_intervals<A, C>(
-    column: &[A],
-    classes: &[C],
-    small: usize,
-) -> Vec<Interval<A, C>>
+pub fn find_intervals<A, C>(column: &[A], classes: &[C], small: usize) -> Vec<Interval<A, C>>
 where
-    A: OrdSubset + Debug + Copy,
-    C: Debug + Eq + Hash + Copy,
+    A: OrdSubset + Copy + Debug,
+    C: Eq + Hash + Copy + Debug,
 {
     // 1. Get the attribute values (plus associated class) in attribute sorted order:
     let mut sorted: Vec<(&A, &C)> = Vec::new();
@@ -55,7 +51,7 @@ where
     let split_trimmed = trim_splits(split_index, small, &sorted);
 
     // 4. Generate distinct intervals from the splits:
-    let intervals: Vec<Interval<A, C>> = from_splits(split_trimmed, &sorted);
+    let intervals: Vec<Interval<A, C>> = intervals_from_splits(split_trimmed, &sorted);
 
     let merged_intervals = Interval::merge_neighbours_with_same_class(&intervals);
     merged_intervals
@@ -66,10 +62,10 @@ where
 // The first split is "anything below this value", and the last is "anything of this value and above".
 // Anything else is a range interval.
 // If there are no splits, then there's a single interval covering all values.
-fn from_splits<A, C>(splits: Vec<usize>, data: &[(&A, &C)]) -> Vec<Interval<A, C>>
+fn intervals_from_splits<A, C>(splits: Vec<usize>, data: &[(&A, &C)]) -> Vec<Interval<A, C>>
 where
-    A: OrdSubset + Debug + Copy,
-    C: Debug + Eq + Hash + Copy,
+    A: OrdSubset + Copy + Debug,
+    C: Eq + Hash + Copy + Debug,
 {
     // What do do about ties for most frequent class? https://github.com/d6y/oner/issues/3#issuecomment-537864969
     let most_frequent_class = |start: usize, until: usize| {
@@ -79,7 +75,7 @@ where
             .ord_subset_max_by_key(|pair| pair.1)
             .map(|pair| *pair.0);
 
-        largest.unwrap_or_else(|| panic!("Found no clsses for a split during quantization. Range is {} until {} in splits {:?} for data {:?}", start, until, &splits, data))
+        largest.unwrap_or_else(|| panic!("Found no classes for a split during quantization. This is likely a bug in this quantize implementation. Range is {} until {} in splits {:?} for data {:?}", start, until, &splits, data))
     };
 
     let lower = |index: usize| Interval::Lower {
