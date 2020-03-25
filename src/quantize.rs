@@ -25,9 +25,9 @@ use std::hash::Hash;
     }
 */
 
-pub fn find_intervals<'x, A, C>(
-    column: &'x [A],
-    classes: &'x [C],
+pub fn find_intervals<A, C>(
+    column: &[A],
+    classes: &[C],
     small: usize,
 ) -> Vec<Interval<A, C>>
 where
