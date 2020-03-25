@@ -7,24 +7,36 @@ mod iter;
 
 use interval::Interval;
 use iter::{all_numeric_or_missing, count_distinct, frequency_count};
+use ord_subset::OrdSubset;
 use ord_subset::OrdSubsetSliceExt;
 use std::collections::HashMap;
+use std::fmt::Debug;
+use std::hash::Hash;
 
-fn is_numeric(values: &[&String]) -> bool {
-    // From Holt p. 66:
-    // "To be counted, in table 2, as continuous (column entitled "cont") an attribute must have more than six numerical values."
-    all_numeric_or_missing(values) && count_distinct(values) > 6
-}
+/*
+    // 5. Generate a re-mapping table from each value we've seen to a new qualitized value:
+    let interval = |value: &A| merged_intervals.iter().find(|i| i.matches(value));
 
-fn quantize_column<'v>(column: &'v [(&str, &str)], small: usize) -> HashMap<&'v str, String> {
-    // 1. Get the attribute values in sorted order:
-    let mut sorted: Vec<(f32, &str)> = Vec::new();
-    for (v, c) in column {
-        if let Ok(n) = v.parse::<f32>() {
-            sorted.push((n, c));
-        } else {
-            unimplemented!("Cannot yet quantize non-numeric values");
+    let mut remapping: HashMap<&str, String> = HashMap::new();
+
+    let original_string_values = column.iter().map(|(k, _v)| k);
+    let numeric_values = sorted.iter().map(|(k, _v)| k);
+    for (numeric, value) in numeric_values.zip(original_string_values) {
+        if let Some(ival) = interval(*numeric) {
+            remapping.insert(value, ival.show());
         }
+    }
+*/
+
+fn find_intervals<'x, A, C>(column: &'x [A], classes: &'x [C], small: usize) -> Vec<Interval<A, C>>
+where
+    A: OrdSubset + Debug + Copy,
+    C: Debug + Eq + Hash + Copy,
+{
+    // 1. Get the attribute values (plus associated class) in sorted order:
+    let mut sorted: Vec<(&A, &C)> = Vec::new();
+    for (v, c) in column.iter().zip(classes.iter()) {
+        sorted.push((v, c));
     }
     sorted.ord_subset_sort_by_key(|pair| pair.0);
 
@@ -42,33 +54,21 @@ fn quantize_column<'v>(column: &'v [(&str, &str)], small: usize) -> HashMap<&'v 
     let split_trimmed = trim_splits(split_index, small, &sorted);
 
     // 4. Generate distinct intervals from the splits:
-    let intervals: Vec<Interval<f32, &str>> = Interval::from_splits(split_trimmed, &sorted);
+    let intervals: Vec<Interval<A, C>> = Interval::from_splits(split_trimmed, &sorted);
+
     let merged_intervals = Interval::merge_neighbours_with_same_class(&intervals);
-
-    // 5. Generate a re-mapping table from each value we've seen to a new qualitized value:
-    let interval = |value: f32| merged_intervals.iter().find(|i| i.matches(value));
-
-    let mut remapping: HashMap<&str, String> = HashMap::new();
-
-    let original_string_values = column.iter().map(|(k, _v)| k);
-    let numeric_values = sorted.iter().map(|(k, _v)| k);
-    for (numeric, value) in numeric_values.zip(original_string_values) {
-        if let Some(ival) = interval(*numeric) {
-            remapping.insert(value, ival.show());
-        }
-    }
-    remapping
+    merged_intervals
 }
 
-fn trim_splits(splits: Vec<usize>, small: usize, data: &[(f32, &str)]) -> Vec<usize> {
+fn trim_splits<A, C: Eq + Hash>(splits: Vec<usize>, small: usize, data: &[(&A, &C)]) -> Vec<usize> {
     // Tail-recursive safe walk of the splits:
     trim_splits0(splits.as_slice(), small, data, Vec::new(), 0)
 }
 
-fn trim_splits0(
+fn trim_splits0<A, C: Eq + Hash>(
     splits: &[usize],
     small: usize,
-    data: &[(f32, &str)],
+    data: &[(&A, &C)],
     mut keep: Vec<usize>,
     start_index: usize,
 ) -> Vec<usize> {
@@ -88,21 +88,37 @@ fn trim_splits0(
     }
 }
 
-fn no_dominant_class(start: usize, until: usize, small: usize, data: &[(f32, &str)]) -> bool {
-    let classes: Vec<&str> = data[start..until].iter().map(|pair| pair.1).collect();
+fn no_dominant_class<A, C: Eq + Hash>(
+    start: usize,
+    until: usize,
+    small: usize,
+    data: &[(&A, &C)],
+) -> bool {
+    let classes: Vec<&C> = data[start..until].iter().map(|pair| pair.1).collect();
     let counts = frequency_count(&classes);
     counts.values().all(|&count| count <= small)
 }
 
 #[cfg(test)]
 mod tests {
-    use super::quantize_column;
-    use std::collections::HashMap;
+    use super::find_intervals;
+    use super::Interval;
     #[test]
     fn test_golf_example() {
         // This example (inputs, and boundary points) comes from:
         // Nevill-Manning, Holmes & Witten (1995)  _The Development of Holte's 1R Classifier_, p. 2
 
+        let attrbibute = vec![64, 65, 68, 69, 70, 71, 72, 72, 75, 75, 80, 81, 83, 85];
+
+        let classes = vec!["p", "d", "p", "p", "p", "d", "p", "d", "p", "p", "d", "p", "p", "d"];
+
+        let actual = find_intervals(&attrbibute, &classes, 3);
+
+        let expected = vec![Interval::lower(85, "p"), Interval::upper(85, "d")];
+
+        assert_eq!(expected, actual);
+
+        /*
         let inputs = [
             ("64", "P"),
             ("65", "D"),
@@ -142,5 +158,6 @@ mod tests {
         .map(|(v, s)| (*v, s.to_string()))
         .collect();
         assert_eq!(expected, quantize_column(&inputs, 3));
+        */
     }
 }

@@ -8,19 +8,27 @@ use std::fmt::Debug;
 use std::fmt::Display;
 use std::hash::Hash;
 
-#[derive(Debug, Clone, Copy)]
-pub enum Interval<T, C> {
-    Lower { below: T, class: C },          // e.g., < 100
-    Range { from: T, below: T, class: C }, // e.g., >= 100 and < 200
-    Upper { from: T, class: C },           // e.g., >= 200
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum Interval<A, C> {
+    Lower { below: A, class: C },          // e.g., < 100
+    Range { from: A, below: A, class: C }, // e.g., >= 100 and < 200
+    Upper { from: A, class: C },           // e.g., >= 200
     Infinite { class: C },
 }
 
-impl<T, C> Interval<T, C>
+impl<A, C> Interval<A, C>
 where
-    T: Copy + Debug + Display + PartialOrd,
-    C: Copy + Debug,
+    A: Debug + PartialOrd + Copy,
+    C: Debug + Copy,
 {
+    pub fn lower(below: A, class: C) -> Self {
+        Interval::Lower { below, class }
+    }
+
+    pub fn upper(from: A, class: C) -> Self {
+        Interval::Upper { from, class }
+    }
+    /*
     pub fn show(&self) -> String {
         match self {
             Interval::Lower { below, .. } => format!("< {}", below),
@@ -28,9 +36,9 @@ where
             Interval::Upper { from, .. } => format!(">= {}", from),
             Interval::Infinite { .. } => String::from("any value"),
         }
-    }
+    }*/
 
-    pub fn matches(&self, value: T) -> bool {
+    pub fn matches(&self, value: A) -> bool {
         match self {
             Interval::Lower { below, .. } => value < *below,
             Interval::Range { from, below, .. } => value >= *from && value < *below,
@@ -47,61 +55,43 @@ where
             Interval::Infinite { class } => class,
         }
     }
-
-    fn merge(&self, later: &Self) -> Self {
-        match (self, later) {
-            (Interval::Lower { .. }, Interval::Range { below, class, .. }) => {
-                Interval::Lower { below: *below, class: *class }
-            }
-            (Interval::Lower { .. }, Interval::Upper { class, .. }) => {
-                Interval::Infinite { class: *class }
-            }
-            (Interval::Range { from, .. }, Interval::Range { below, class, .. }) => {
-                Interval::Range { from: *from, below: *below, class: *class }
-            }
-            (Interval::Range { from, .. }, Interval::Upper { class, .. }) => {
-                Interval::Upper { from: *from, class: *class }
-            }
-            _ => panic!("Merging {:?} with {:?} is not supported", self, later),
-        }
-    }
 }
 
-impl<T, C> Interval<T, C>
+impl<A, C> Interval<A, C>
 where
-    T: Copy + Debug + Display + PartialOrd,
-    C: Copy + Debug + Eq + Hash,
+    A: Debug + PartialOrd + Copy,
+    C: Debug + Eq + Hash + Copy,
 {
     // `splits` is a list of indices where we want to break the values into intervals.
     // The values are the (value, class) pairs in `data`, and the `splits` contents are indicies are into `data`.
     // The first split is "anything below this value", and the last is "anything of this value and above".
     // Anything else is a range interval.
     // If there are no splits, then there's a single interval covering all values.
-    pub fn from_splits(splits: Vec<usize>, data: &[(T, C)]) -> Vec<Interval<T, C>> {
+    pub fn from_splits(splits: Vec<usize>, data: &[(&A, &C)]) -> Vec<Interval<A, C>> {
         // What do do about ties for most frequent class? https://github.com/d6y/oner/issues/3#issuecomment-537864969
         let most_frequent_class = |start: usize, until: usize| {
-            let classes: Vec<C> = data[start..until].iter().map(|pair| pair.1).collect();
-            let largest: Option<&C> = frequency_count(&classes)
+            let classes: Vec<C> = data[start..until].iter().map(|pair| pair.1).cloned().collect();
+            let largest: Option<C> = frequency_count(&classes)
                 .into_iter()
                 .ord_subset_max_by_key(|pair| pair.1)
-                .map(|pair| pair.0);
+                .map(|pair| *pair.0);
 
-            *largest.unwrap_or_else(|| panic!("Found no classes for a split during quantization. Range is {} until {} in splits {:?} for data {:?}", start, until, &splits, data))
+            largest.unwrap_or_else(|| panic!("Found no clsses for a split during quantization. Range is {} until {} in splits {:?} for data {:?}", start, until, &splits, data))
         };
 
         let lower = |index: usize| Interval::Lower {
-            below: data[index].0,
+            below: data[index].0.to_owned(),
             class: most_frequent_class(0, index),
         };
 
         let upper = |index: usize| Interval::Upper {
-            from: data[index].0,
+            from: data[index].0.to_owned(),
             class: most_frequent_class(index, data.len()),
         };
 
         let range = |index_start: usize, index_end: usize| Interval::Range {
-            from: data[index_start].0,
-            below: data[index_end].0,
+            from: data[index_start].0.to_owned(),
+            below: data[index_end].0.to_owned(),
             class: most_frequent_class(index_start, index_end),
         };
 
@@ -122,8 +112,26 @@ where
         }
     }
 
-    pub fn merge_neighbours_with_same_class(intervals: &[Interval<T, C>]) -> Vec<Interval<T, C>> {
-        let mut merged: Vec<Interval<T, C>> = Vec::new();
+    fn merge(&self, later: &Self) -> Self {
+        match (self, later) {
+            (Interval::Lower { .. }, Interval::Range { below, class, .. }) => {
+                Interval::Lower { below: below.to_owned(), class: class.to_owned() }
+            }
+            (Interval::Lower { .. }, Interval::Upper { class, .. }) => {
+                Interval::Infinite { class: *class }
+            }
+            (Interval::Range { from, .. }, Interval::Range { below, class, .. }) => {
+                Interval::Range { from: *from, below: *below, class: *class }
+            }
+            (Interval::Range { from, .. }, Interval::Upper { class, .. }) => {
+                Interval::Upper { from: *from, class: *class }
+            }
+            _ => panic!("Merging {:?} with {:?} is not supported", self, later),
+        }
+    }
+
+    pub fn merge_neighbours_with_same_class(intervals: &[Interval<A, C>]) -> Vec<Interval<A, C>> {
+        let mut merged: Vec<Interval<A, C>> = Vec::new();
 
         if let Some(head) = intervals.first() {
             let mut last_class = head.class();
