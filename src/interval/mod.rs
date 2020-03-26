@@ -3,7 +3,9 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 use std::fmt::Debug;
-use std::hash::Hash;
+
+mod merge;
+pub use merge::merge_neighbours_with_same_class;
 
 /// An interval represents a mapping from a range of values of type `A`, to a class, `C`.
 ///
@@ -50,6 +52,7 @@ where
         }
     }*/
 
+    /// Does the given `value` fall inside this interval?
     pub fn matches(&self, value: A) -> bool {
         match self {
             Interval::Lower { below, .. } => value < *below,
@@ -59,59 +62,13 @@ where
         }
     }
 
-    fn class(&self) -> &C {
+    /// The class that this interval predicts.
+    pub fn class(&self) -> &C {
         match self {
             Interval::Lower { class, .. } => class,
             Interval::Range { class, .. } => class,
             Interval::Upper { class, .. } => class,
             Interval::Infinite { class } => class,
         }
-    }
-}
-
-impl<A, C> Interval<A, C>
-where
-    A: Debug + PartialOrd + Copy,
-    C: Debug + Eq + Hash + Copy,
-{
-    fn merge(&self, later: &Self) -> Self {
-        match (self, later) {
-            (Interval::Lower { .. }, Interval::Range { below, class, .. }) => {
-                Interval::Lower { below: below.to_owned(), class: class.to_owned() }
-            }
-            (Interval::Lower { .. }, Interval::Upper { class, .. }) => {
-                Interval::Infinite { class: *class }
-            }
-            (Interval::Range { from, .. }, Interval::Range { below, class, .. }) => {
-                Interval::Range { from: *from, below: *below, class: *class }
-            }
-            (Interval::Range { from, .. }, Interval::Upper { class, .. }) => {
-                Interval::Upper { from: *from, class: *class }
-            }
-            _ => panic!("Merging {:?} with {:?} is not supported", self, later),
-        }
-    }
-
-    pub fn merge_neighbours_with_same_class(intervals: &[Interval<A, C>]) -> Vec<Interval<A, C>> {
-        let mut merged: Vec<Interval<A, C>> = Vec::new();
-
-        if let Some(head) = intervals.first() {
-            let mut last_class = head.class();
-            merged.push(*head);
-
-            let tail = &intervals[1..];
-            for interval in tail {
-                let class = interval.class();
-                if class == last_class {
-                    let updated = merged.pop().map(|last| last.merge(interval));
-                    updated.into_iter().for_each(|i| merged.push(i));
-                } else {
-                    last_class = class;
-                    merged.push(*interval);
-                }
-            }
-        }
-
-        merged
     }
 }
