@@ -2,8 +2,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use crate::Interval;
 use super::interval::merge_neighbours_with_same_class;
+use crate::Interval;
 use ord_subset::OrdSubset;
 use ord_subset::OrdSubsetSliceExt;
 use std::fmt::Debug;
@@ -12,29 +12,41 @@ use std::hash::Hash;
 mod splits;
 use splits::{intervals_from_splits, trim_splits};
 
-/*
-    // 5. Generate a re-mapping table from each value we've seen to a new qualitized value:
-    let interval = |value: &A| merged_intervals.iter().find(|i| i.matches(value));
-
-    let mut remapping: HashMap<&str, String> = HashMap::new();
-
-    let original_string_values = column.iter().map(|(k, _v)| k);
-    let numeric_values = sorted.iter().map(|(k, _v)| k);
-    for (numeric, value) in numeric_values.zip(original_string_values) {
-        if let Some(ival) = interval(*numeric) {
-            remapping.insert(value, ival.show());
-        }
-    }
-*/
-
-pub fn find_intervals<A, C>(column: &[A], classes: &[C], small: usize) -> Vec<Interval<A, C>>
+/// Quantize the given `attribute` (aka feature, column) into an ordered list of `Intervals`.
+///
+/// # Arguments
+///
+/// * `attribute` - a single attribute, typically numeric, to be quantized.
+/// * `classes` - the corresponsing class for each attribute value.
+/// * `small` -  the small disjunct threshold, such as 3. There has to be at least one class in an interval with more than `small` values in the interval.
+///
+/// # Examples
+/// ```
+/// use oner_quantize::find_intervals;
+/// use oner_quantize::Interval;
+/// use oner_quantize::Interval::{Lower, Range, Upper};
+///
+/// // Fake data that has three clear splits:
+/// let attribute = vec![  1, 10,   3,   1,  20,  30,  100];
+/// let classes   = vec!["a", "b", "a", "a", "b", "b", "c"];
+///
+/// let intervals =
+///    find_intervals(&attribute, &classes, 2);
+///
+/// assert_eq!(intervals, vec![
+///   Lower { below: 10, class: "a" },
+///   Range { from: 10, below: 100, class: "b" },
+///   Upper { from: 100, class: "c" }
+/// ]);
+/// ```
+pub fn find_intervals<A, C>(attribute: &[A], classes: &[C], small: usize) -> Vec<Interval<A, C>>
 where
     A: OrdSubset + Copy + Debug,
     C: Eq + Hash + Copy + Debug,
 {
     // 1. Get the attribute values (plus associated class) in attribute sorted order:
     let mut sorted: Vec<(&A, &C)> = Vec::new();
-    for (v, c) in column.iter().zip(classes.iter()) {
+    for (v, c) in attribute.iter().zip(classes.iter()) {
         sorted.push((v, c));
     }
     sorted.ord_subset_sort_by_key(|pair| pair.0);
@@ -55,8 +67,7 @@ where
     // 4. Generate distinct intervals from the splits:
     let intervals: Vec<Interval<A, C>> = intervals_from_splits(split_trimmed, &sorted);
 
-    let merged_intervals = merge_neighbours_with_same_class(&intervals);
-    merged_intervals
+    merge_neighbours_with_same_class(&intervals)
 }
 
 #[cfg(test)]
@@ -121,3 +132,18 @@ mod tests {
         */
     }
 }
+
+/*
+    // 5. Generate a re-mapping table from each value we've seen to a new qualitized value:
+    let interval = |value: &A| merged_intervals.iter().find(|i| i.matches(value));
+
+    let mut remapping: HashMap<&str, String> = HashMap::new();
+
+    let original_string_values = column.iter().map(|(k, _v)| k);
+    let numeric_values = sorted.iter().map(|(k, _v)| k);
+    for (numeric, value) in numeric_values.zip(original_string_values) {
+        if let Some(ival) = interval(*numeric) {
+            remapping.insert(value, ival.show());
+        }
+    }
+*/

@@ -5,9 +5,9 @@
 use crate::Interval;
 use ord_subset::OrdSubset;
 use ord_subset::OrdSubsetIterExt;
+use std::collections::HashMap;
 use std::fmt::Debug;
 use std::hash::Hash;
-use std::collections::HashMap;
 
 // `splits` is a list of indices where we want to break the values into intervals.
 // The values are the (value, class) pairs in `data`, and the `splits` contents are indicies are into `data`.
@@ -63,7 +63,11 @@ where
     }
 }
 
-pub fn trim_splits<A, C: Eq + Hash>(splits: Vec<usize>, small: usize, data: &[(&A, &C)]) -> Vec<usize> {
+pub fn trim_splits<A, C: Eq + Hash>(
+    splits: Vec<usize>,
+    small: usize,
+    data: &[(&A, &C)],
+) -> Vec<usize> {
     // Tail-recursive safe walk of the splits:
     trim_splits0(splits.as_slice(), small, data, Vec::new(), 0)
 }
