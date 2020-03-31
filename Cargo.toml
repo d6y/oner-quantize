@@ -15,5 +15,3 @@ exclude = [".github/"]
 ord_subset = "3"
 ndarray = "0.13"
 itertools = "0.9"
-
-
