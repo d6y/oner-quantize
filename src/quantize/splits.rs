@@ -81,7 +81,9 @@ fn trim_splits0<A, C: Eq + Hash>(
 ) -> Vec<usize> {
     if let Some(head) = splits.first() {
         let tail = &splits[1..];
-        if no_dominant_class(start_index, *head, small, data) {
+        if no_dominant_class(start_index, *head, small, data)
+            || next_split_same_class(start_index, *head, data, tail.first())
+        {
             // Drop this split:
             trim_splits0(tail, small, data, keep, start_index)
         } else {
@@ -93,6 +95,33 @@ fn trim_splits0<A, C: Eq + Hash>(
         // No more elements to process
         keep
     }
+}
+
+fn next_split_same_class<A, C: Eq + Hash>(
+    start: usize,
+    until: usize,
+    data: &[(&A, &C)],
+    next: Option<&usize>,
+) -> bool {
+    // If the next split contains the same class as the current dominant class, drop this split too
+    // so that we merge in the next class with this one.
+    // [  start...head, next, ... ]
+    let class: Option<&C> = most_frequest_class(start, until, data);
+    let next_class: Option<&C> =
+        next.and_then(|&split_idx| most_frequest_class(until, split_idx, data));
+    // dbg!(&class);
+    // dbg!(&next_class);
+    next_class == class
+}
+
+fn most_frequest_class<'a, A, C: Eq + Hash>(
+    start: usize,
+    until: usize,
+    data: &'a [(&A, &C)],
+) -> Option<&'a C> {
+    let classes: Vec<&C> = data[start..until].iter().map(|pair| pair.1).collect();
+    let counts = frequency_count(&classes);
+    counts.into_iter().max_by_key(|&(_, count)| count).map(|(class, _)| *class)
 }
 
 fn no_dominant_class<A, C: Eq + Hash>(

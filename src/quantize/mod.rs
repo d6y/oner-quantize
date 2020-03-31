@@ -51,31 +51,25 @@ where
     }
     sorted.ord_subset_sort_by_key(|pair| pair.0);
 
-    // 2. Create a (tentative) split each time the attribute value changes and the class value changes
+    // 2. Create a (tentative) split each time the attribute value changes.
 
     // Index into `sorted` where the classification changes to a different value.
-    // That is, a value of 1 in split_index means the attribute value at sorted[0] differs from sorted[1].
+    // That is, a value of 1 in `split_index` means the attribute value at sorted[0] differs from sorted[1].
     // The split happens between index 0 and 1 in that example.
     let mut split_index = Vec::new();
-    for (prev_index, ((cur_value, cur_class), (prev_value, prev_class))) in
+    for (prev_index, ((cur_value, _cur_class), (prev_value, _prev_class))) in
         sorted.iter().skip(1).zip(sorted.iter()).enumerate()
     {
-        if cur_value != prev_value && cur_class != prev_class {
+        if cur_value != prev_value {
             split_index.push(prev_index + 1);
         }
     }
 
-    // println!("Sorted: {:?}", &sorted);
-    // println!("Split index: {:?}", &split_index);
-    // println!("{:?}", &sorted);
-
     // 3. Remove splits that are too small:
     let split_index_trimmed = trim_splits(split_index, small, &sorted);
-    // println!("split_timmed {:?}", &split_index_trimmed);
 
     // 4. Generate distinct intervals from the splits:
     let intervals: Vec<Interval<A, C>> = intervals_from_splits(split_index_trimmed, &sorted);
-    // println!("unmerged intervals {:?}", &intervals);
 
     merge_neighbours_with_same_class(&intervals)
 }
