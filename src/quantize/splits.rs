@@ -63,7 +63,7 @@ where
     }
 }
 
-pub fn trim_splits<A, C: Eq + Hash>(
+pub fn trim_splits<A, C: std::fmt::Debug + Eq + Hash>(
     splits: Vec<usize>,
     small: usize,
     data: &[(&A, &C)],
@@ -72,7 +72,7 @@ pub fn trim_splits<A, C: Eq + Hash>(
     trim_splits0(splits.as_slice(), small, data, Vec::new(), 0)
 }
 
-fn trim_splits0<A, C: Eq + Hash>(
+fn trim_splits0<A, C: std::fmt::Debug + Eq + Hash>(
     splits: &[usize],
     small: usize,
     data: &[(&A, &C)],
@@ -97,7 +97,7 @@ fn trim_splits0<A, C: Eq + Hash>(
     }
 }
 
-fn next_split_same_class<A, C: Eq + Hash>(
+fn next_split_same_class<A, C: std::fmt::Debug + Eq + Hash>(
     start: usize,
     until: usize,
     data: &[(&A, &C)],
@@ -109,12 +109,10 @@ fn next_split_same_class<A, C: Eq + Hash>(
     let class: Option<&C> = most_frequest_class(start, until, data);
     let next_class: Option<&C> =
         next.and_then(|&split_idx| most_frequest_class(until, split_idx, data));
-    // dbg!(&class);
-    // dbg!(&next_class);
     next_class == class
 }
 
-fn most_frequest_class<'a, A, C: Eq + Hash>(
+fn most_frequest_class<'a, A, C: std::fmt::Debug + Eq + Hash>(
     start: usize,
     until: usize,
     data: &'a [(&A, &C)],

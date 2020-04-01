@@ -60,13 +60,14 @@ where
     for (prev_index, ((cur_value, _cur_class), (prev_value, _prev_class))) in
         sorted.iter().skip(1).zip(sorted.iter()).enumerate()
     {
-        if cur_value != prev_value {
+        if cur_value > prev_value {
             split_index.push(prev_index + 1);
         }
     }
 
     // 3. Remove splits that are too small:
     let split_index_trimmed = trim_splits(split_index, small, &sorted);
+    // println!("Unmerged splits: {:?}", &split_index_trimmed);
 
     // 4. Generate distinct intervals from the splits:
     let intervals: Vec<Interval<A, C>> = intervals_from_splits(split_index_trimmed, &sorted);
