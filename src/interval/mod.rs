@@ -2,8 +2,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use std::fmt::Debug;
-
 mod merge;
 pub use merge::merge_neighbours_with_same_class;
 
@@ -32,25 +30,20 @@ pub enum Interval<A, C> {
 
 impl<A, C> Interval<A, C>
 where
-    A: Debug + PartialOrd + Copy,
-    C: Debug + Copy,
+    A: PartialOrd + Copy,
+    C: Copy,
 {
     pub fn lower(below: A, class: C) -> Self {
         Interval::Lower { below, class }
     }
 
+    pub fn range(from: A, below: A, class: C) -> Self {
+        Interval::Range { from, below, class }
+    }
+
     pub fn upper(from: A, class: C) -> Self {
         Interval::Upper { from, class }
     }
-    /*
-    pub fn show(&self) -> String {
-        match self {
-            Interval::Lower { below, .. } => format!("< {}", below),
-            Interval::Range { from, below, .. } => format!(">= {} and < {}", from, below),
-            Interval::Upper { from, .. } => format!(">= {}", from),
-            Interval::Infinite { .. } => String::from("any value"),
-        }
-    }*/
 
     /// Does the given `value` fall inside this interval?
     pub fn matches(&self, value: A) -> bool {

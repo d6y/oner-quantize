@@ -28,3 +28,4 @@ pub use interval::Interval;
 
 mod quantize;
 pub use quantize::find_intervals;
+pub use quantize::quantize;

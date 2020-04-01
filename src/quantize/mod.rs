@@ -138,6 +138,36 @@ mod tests {
     }
 }
 
+/// Find which interval applies to a given attribute value.
+///
+/// # Examples
+///
+/// ```
+/// use oner_quantize::Interval;
+/// use oner_quantize::quantize;
+///
+/// let intervals = vec![
+///     Interval::lower(15, "x"),
+///     Interval::range(15, 20, "y"),
+///     Interval::upper(20, "z")
+/// ];
+///
+/// // Quantize into an interval, and extract the corresponding class:
+/// let class = |attribute_value| quantize(&intervals, attribute_value)
+///   .map(|interval| interval.class());
+///
+/// assert_eq!(class(10), Some(&"x"));
+/// assert_eq!(class(15), Some(&"y"));
+/// assert_eq!(class(99), Some(&"z"));
+/// ```
+pub fn quantize<A, C>(intervals: &[Interval<A, C>], attribute_value: A) -> Option<&Interval<A, C>>
+where
+    A: PartialOrd + Copy,
+    C: Copy,
+{
+    intervals.iter().find(|interval| interval.matches(attribute_value))
+}
+
 /*
     // 5. Generate a re-mapping table from each value we've seen to a new qualitized value:
     let interval = |value: &A| merged_intervals.iter().find(|i| i.matches(value));
