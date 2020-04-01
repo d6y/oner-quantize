@@ -70,7 +70,7 @@ where
 
     // 4. Generate distinct intervals from the splits:
     let intervals: Vec<Interval<A, C>> = intervals_from_splits(split_index_trimmed, &sorted);
-   
+
     // 5. Remove redundant intervals:
     merge_neighbours_with_same_class(&intervals)
 }
