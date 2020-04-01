@@ -53,7 +53,7 @@ where
 
     // 2. Create a (tentative) split each time the attribute value changes.
 
-    // Index into `sorted` where the classification changes to a different value.
+    // `split_index` contains indicies into `sorted` where we might split the attribute into an interval boundary.
     // That is, a value of 1 in `split_index` means the attribute value at sorted[0] differs from sorted[1].
     // The split happens between index 0 and 1 in that example.
     let mut split_index = Vec::new();
@@ -67,11 +67,11 @@ where
 
     // 3. Remove splits that are too small:
     let split_index_trimmed = trim_splits(split_index, small, &sorted);
-    // println!("Unmerged splits: {:?}", &split_index_trimmed);
 
     // 4. Generate distinct intervals from the splits:
     let intervals: Vec<Interval<A, C>> = intervals_from_splits(split_index_trimmed, &sorted);
-
+   
+    // 5. Remove redundant intervals:
     merge_neighbours_with_same_class(&intervals)
 }
 

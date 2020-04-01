@@ -5,8 +5,10 @@
 use crate::Interval;
 use ord_subset::OrdSubset;
 use ord_subset::OrdSubsetIterExt;
+use rustc_hash::FxHasher;
 use std::collections::HashMap;
 use std::fmt::Debug;
+use std::hash::BuildHasherDefault;
 use std::hash::Hash;
 
 // `splits` is a list of indices where we want to break the values into intervals.
@@ -97,15 +99,13 @@ fn trim_splits0<A, C: std::fmt::Debug + Eq + Hash>(
     }
 }
 
+// Test if the next split has a majority class  which is the same as the current dominant class.
 fn next_split_same_class<A, C: std::fmt::Debug + Eq + Hash>(
     start: usize,
     until: usize,
     data: &[(&A, &C)],
     next: Option<&usize>,
 ) -> bool {
-    // If the next split contains the same class as the current dominant class, drop this split too
-    // so that we merge in the next class with this one.
-    // [  start...head, next, ... ]
     let class: Option<&C> = most_frequest_class(start, until, data);
     let next_class: Option<&C> =
         next.and_then(|&split_idx| most_frequest_class(until, split_idx, data));
@@ -133,11 +133,13 @@ fn no_dominant_class<A, C: Eq + Hash>(
     counts.values().all(|&count| count <= small)
 }
 
-fn frequency_count<T>(ts: &[T]) -> HashMap<&T, usize>
+// Using FxHasher for deterministic hashing.
+// This will give deterministic runs in the case of ties for most frequent class.
+fn frequency_count<T>(ts: &[T]) -> HashMap<&T, usize, BuildHasherDefault<FxHasher>>
 where
     T: Eq + Hash,
 {
-    let mut counts = HashMap::new();
+    let mut counts = HashMap::with_hasher(BuildHasherDefault::<FxHasher>::default());
     for t in ts {
         let count = counts.entry(t).or_insert(0);
         *count += 1;
