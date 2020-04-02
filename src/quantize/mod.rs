@@ -93,48 +93,6 @@ mod tests {
         let expected = vec![Interval::lower(85, "p"), Interval::upper(85, "d")];
 
         assert_eq!(expected, actual);
-
-        /*
-        let inputs = [
-            ("64", "P"),
-            ("65", "D"),
-            ("68", "P"),
-            ("69", "P"),
-            ("70", "P"),
-            ("71", "D"),
-            ("72", "P"),
-            ("72", "D"),
-            ("75", "P"),
-            ("75", "P"),
-            ("80", "D"),
-            ("81", "P"),
-            ("83", "P"),
-            ("85", "D"),
-        ];
-
-        let i1 = "< 85";
-        let i2 = ">= 85";
-
-        let expected: HashMap<&str, String> = [
-            ("64", i1),
-            ("65", i1),
-            ("68", i1),
-            ("69", i1),
-            ("70", i1),
-            ("71", i1),
-            ("72", i1),
-            ("75", i1),
-            ("75", i1),
-            ("80", i1),
-            ("81", i1),
-            ("83", i1),
-            ("85", i2),
-        ]
-        .iter()
-        .map(|(v, s)| (*v, s.to_string()))
-        .collect();
-        assert_eq!(expected, quantize_column(&inputs, 3));
-        */
     }
 }
 
