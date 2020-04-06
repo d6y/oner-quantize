@@ -22,7 +22,7 @@ This is a reimplementation of the 1R quantization algorithm described in [Holte 
 
 # Documentation and examples
 
-- [API reference and usage](https://docs.rs/oner_quantization)
+- [API reference and usage](https://docs.rs/oner_quantize/)
 - An example application: <https://github.com/d6y/oner>
 
 # License
