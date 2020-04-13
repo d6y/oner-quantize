@@ -11,6 +11,7 @@ jobs:
     - name: Nightly toolchain
       uses: actions-rs/toolchain@v1
       with:
+<<<<<<< HEAD
         toolchain: nightly
         override: true
 
@@ -25,6 +26,10 @@ jobs:
 
     - name: grcov
       uses: actions-rs/grcov@v0.1.5
+=======
+        version: '0.12.1'
+        args: '-- --test-threads 1 --run-types Tests --run-types Doctests'
+>>>>>>> parent of 7db2f3e... run tarpaulin on docs and tests
 
     - name: Upload to codecov.io
       uses: codecov/codecov-action@v1.0.6
