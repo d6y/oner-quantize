@@ -38,7 +38,7 @@ jobs:
       uses: actions-rs/grcov@v0.1.5
 
     - name: Upload to codecov.io
-      uses: codecov/codecov-action@v1.0.2
+      uses: codecov/codecov-action@v1.0.6
       with:
         token: ${{secrets.CODECOV_TOKEN}}
         file: ${{ steps.grcov.outputs.report }} 
