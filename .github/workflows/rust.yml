@@ -34,12 +34,13 @@ jobs:
         CARGO_INCREMENTAL: '0'
         RUSTFLAGS: '-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Zno-landing-pads'
 
-    - name: Grcov
+    - name: grcov
       uses: actions-rs/grcov@v0.1.5
 
     - name: Upload to codecov.io
       uses: codecov/codecov-action@v1.0.2
       with:
         token: ${{secrets.CODECOV_TOKEN}}
+        file: ${{ steps.grcov..outputs.report }} 
 
 
