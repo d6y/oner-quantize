@@ -31,5 +31,5 @@ jobs:
       with:
         token: ${{secrets.CODECOV_TOKEN}}
         file: ${{ steps.grcov.outputs.report }} 
-        flags: -X
+        flags: -X gcov
 
