@@ -14,17 +14,19 @@ jobs:
     - name: Run tests
       run: cargo test --verbose
 
-    - uses: actions-rs/cargo@v1
+    - name: Clean
+      uses: actions-rs/cargo@v1
       with:
         command: clean
 
-    - name: Coverage
+    - name: Nightly toolchain
       uses: actions-rs/toolchain@v1
       with:
         toolchain: nightly
         override: true
 
-    - uses: actions-rs/cargo@v1
+    - name: Coverage test
+      uses: actions-rs/cargo@v1
       with:
         command: test
         args: --all-features --no-fail-fast
@@ -32,7 +34,8 @@ jobs:
         CARGO_INCREMENTAL: '0'
         RUSTFLAGS: '-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Zno-landing-pads'
 
-    - uses: actions-rs/grcov@v0.1
+    - name: Grcov
+      uses: actions-rs/grcov@v0.1.5
 
     - name: Upload to codecov.io
       uses: codecov/codecov-action@v1.0.2
