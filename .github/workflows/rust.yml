@@ -8,9 +8,6 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: clean up
-      run: find . -name \*.gcno -exec rm {} \;
-
     - name: Nightly toolchain
       uses: actions-rs/toolchain@v1
       with:
@@ -34,5 +31,5 @@ jobs:
       with:
         token: ${{secrets.CODECOV_TOKEN}}
         file: ${{ steps.grcov.outputs.report }} 
-
+        flags: -X
 
